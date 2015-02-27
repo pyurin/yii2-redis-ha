@@ -15,7 +15,7 @@
   },
   "autoload" : {
     "psr-4" : {
-      "yii\\redis\\" : ""
+      "pyurin\\yii\\redisHa\\" : "src/"
     }
   },
   "type" : "yii2-extension",
