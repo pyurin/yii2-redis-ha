@@ -4,7 +4,7 @@ This Yii2 component is based on core yii2-redis component https://github.com/yii
 It`s rather simple - gets master server address from given sentinels and connects to it, then operates just like \yii\redis\Connection. 
 It works with sentinels only, does not connect to redis hosts without sentinels.
 
-Workflow of connection process
+Workflow of connection process 
 --------------------------------------------
 Loop over given sentinels and search for an alive one that will give a master host address.
 If a sentinel does not respond or it`s respond is empty, then we`ll try to check the next one.
