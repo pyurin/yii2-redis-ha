@@ -66,19 +66,3 @@ Basic example:
 ```
 Sentinel servers are queried in the same order as exist in array.<br />
 
-
-Installation
----------------------------------------------
-That's part of config for composer:
-
-```
-  "require" : {
-    "pyurin/yii2-redis-ha":"*@dev"
-  },
-  "repositories":[
-  	{
-  	 "type":"git",
-  	 "url":"https://github.com/pyurin/yii2-redis-ha.git"
-  	}
-  ]
-```
