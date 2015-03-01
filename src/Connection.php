@@ -6,7 +6,7 @@ use yii\db\Exception;
 
 class Connection extends \yii\redis\Connection {
 
-	public $sentiels = null;
+	public $sentinels = null;
 
 	public $hostname = null;
 
@@ -37,11 +37,11 @@ class Connection extends \yii\redis\Connection {
 		if ($this->_socket !== null) {
 			return;
 		}
-		if (! $this->sentiels) {
+		if (! $this->sentinels) {
 			throw new Exception("Sentinels must be set");
 		}
 		$this->hostname = $this->unixSocket = $this->port;
-		list ($this->hostname, $this->port) = (new SentinelsManager())->discoverMaster($this->sentiels);
+		list ($this->hostname, $this->port) = (new SentinelsManager())->discoverMaster($this->sentinels);
 		$connection = ($this->unixSocket ?  : $this->hostname . ':' . $this->port) . ', database=' . $this->database;
 		\Yii::trace('Opening redis DB connection: ' . $connection, __METHOD__);
 		$this->_socket = @stream_socket_client($this->unixSocket ? 'unix://' . $this->unixSocket : 'tcp://' . $this->hostname . ':' . $this->port, $errorNumber, $errorDescription, $this->connectionTimeout ? $this->connectionTimeout : ini_get("default_socket_timeout"));

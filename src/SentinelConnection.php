@@ -6,7 +6,7 @@ class SentinelConnection {
 
 	public $hostname;
 
-	public $port;
+	public $port = 26379;
 
 	public $connectionTimeout;
 
