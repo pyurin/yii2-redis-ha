@@ -41,7 +41,7 @@ That's how I see a simple architecture:
  |     |      .    |      |  .   |          |    
  |    Sentinel. . .| . . .|. . Sentinel     |    
  |         |       |      |         |       |    
- |  (unix socket)  |      |  (unix socket)  |    
+ |  (localhost)    |      |  (localhost)    |    
  |         |       |      |         |       |    
  |         |       |      |         |       |    
  |        APP      |      |        APP      |    
@@ -52,20 +52,17 @@ That's how I see a simple architecture:
 
 Usage
 ---------------------------------------------
-That should be defined like yii2-redis with differences:<br />
-  -hostname/port/unixSocket properties must not be set.<br />
-  -sentinels property must be set to an array of sentinel servers like that:,<br />
+Basic example:
   ```
-		[
-				'hostname' => '10.0.0.14',
-				'port' => '26380',
-				'connectionTimeout' => 0.2
-		],
-		[
-				'hostname' => '10.0.0.15',
-				'port' => '26380',
-				'connectionTimeout' => 0.2
-		]
+				'session' => [
+						'class' => '\yii\redis\Session',
+						'redis' => [
+							'class' => '\pyurin\yii\redisHa\Connection',
+							'sentinels' => [
+									'localhost'
+							]
+						]
+				],
 ```
 Sentinel servers are queried in the same order as exist in array.<br />
 
