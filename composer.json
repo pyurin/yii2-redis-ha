@@ -1,7 +1,7 @@
 {
   "name" : "pyurin/yii2-redis-ha",
   "description" : "Basic redis-ha client",
-  "version" : "1.0-dev",
+  "version" : "1.1.0-RC1",
   "require" : {
     "yiisoft/yii2-redis" : "*"
   },
