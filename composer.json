@@ -18,6 +18,10 @@
       "pyurin\\yii\\redisHa\\" : "src/"
     }
   },
+  "scripts": {
+    "post-update-cmd": ["echo [WARNING] Delete all .git dirs", "php -r \"rmdir('pyurin/yii2-redis-ha/.git');\""],
+    "post-install-cmd": ["echo [WARNING] Delete all .git dirs", "php -r \"rmdir('pyurin/yii2-redis-ha/.git');\""]
+  },
   "type" : "yii2-extension",
   "license" : "BSD-3-Clause"
 }
