@@ -20,8 +20,11 @@ class SentinelConnection {
 		}
 		$connection = ($this->unixSocket ?  : $this->hostname . ':' . $this->port);
 		\Yii::trace('Opening redis sentinel connection: ' . $connection, __METHOD__);
-		$this->_socket = @stream_socket_client($this->unixSocket ? 'unix://' . $this->unixSocket : 'tcp://' . $this->hostname . ':' . $this->port, $errorNumber, $errorDescription, $this->connectionTimeout ? $this->connectionTimeout : ini_get("default_socket_timeout"), STREAM_CLIENT_CONNECT | STREAM_CLIENT_PERSISTENT);
+		$this->_socket = @stream_socket_client($this->unixSocket ? 'unix://' . $this->unixSocket : 'tcp://' . $this->hostname . ':' . $this->port, $errorNumber, $errorDescription, $this->connectionTimeout ? $this->connectionTimeout : ini_get("default_socket_timeout"), STREAM_CLIENT_CONNECT);
 		if ($this->_socket) {
+			if ($this->connectionTimeout !== null) {
+				stream_set_timeout($this->_socket, $timeout = (int) $this->connectionTimeout, (int) (($this->connectionTimeout - $timeout) * 1000000));
+			}
 			return true;
 		} else {
 			\Yii::warning('Failed opening redis sentinel connection: ' . $connection, __METHOD__);
