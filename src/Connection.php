@@ -3,6 +3,7 @@
 namespace pyurin\yii\redisHa;
 
 use yii\db\Exception;
+use Yii;
 
 class Connection extends \yii\redis\Connection {
 
@@ -43,8 +44,10 @@ class Connection extends \yii\redis\Connection {
 		$this->hostname = $this->unixSocket = $this->port;
 		list ($this->hostname, $this->port) = (new SentinelsManager())->discoverMaster($this->sentinels);
 		$connection = ($this->unixSocket ?  : $this->hostname . ':' . $this->port) . ', database=' . $this->database;
-		\Yii::trace('Opening redis DB connection: ' . $connection, __METHOD__);
+		Yii::trace('Opening redis DB connection: ' . $connection, __METHOD__);
+		Yii::beginProfile("Connect to redis master", __CLASS__);
 		$this->_socket = @stream_socket_client($this->unixSocket ? 'unix://' . $this->unixSocket : 'tcp://' . $this->hostname . ':' . $this->port, $errorNumber, $errorDescription, $this->connectionTimeout ? $this->connectionTimeout : ini_get("default_socket_timeout"));
+		Yii::endProfile("Connect to redis master", __CLASS__);
 		if ($this->_socket) {
 			if ($this->dataTimeout !== null) {
 				stream_set_timeout($this->_socket, $timeout = (int) $this->dataTimeout, (int) (($this->dataTimeout - $timeout) * 1000000));
@@ -83,6 +86,7 @@ class Connection extends \yii\redis\Connection {
 
 	public function executeCommand ($name, $params = []) {
 		$this->open();
-		return Helper::executeCommand($name, $params, $this->_socket);
+		$result = Helper::executeCommand($name, $params, $this->_socket);
+		return $result;
 	}
 }

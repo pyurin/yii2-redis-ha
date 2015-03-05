@@ -2,19 +2,25 @@
 
 namespace pyurin\yii\redisHa;
 
+use Yii;
+
 class Helper {
 
 	static function executeCommand ($name, $params, $socket) {
+		Yii::beginProfile("Execute command $name", __CLASS__);
 		array_unshift($params, $name);
 		$command = '*' . count($params) . "\r\n";
 		foreach ($params as $arg) {
 			$command .= '$' . mb_strlen($arg, '8bit') . "\r\n" . $arg . "\r\n";
 		}
 		
-		\Yii::trace("Executing Redis Command: {$name}", __METHOD__);
+		Yii::trace("Executing redis Command: {$name} " . ($params ? $params[0] : null), __METHOD__);
 		fwrite($socket, $command);
 		
-		return static::parseResponse(implode(' ', $params), $socket);
+		$result = static::parseResponse(implode(' ', $params), $socket);
+		
+		Yii::endProfile("Execute command $name", __CLASS__);
+		return $result;
 	}
 
 	/**
