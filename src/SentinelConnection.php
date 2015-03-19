@@ -11,11 +11,17 @@ class SentinelConnection {
 	public $port = 26379;
 
 	public $connectionTimeout;
-
+	
+	/**
+	 * Depricated. Redis sentinel does not work on unix socket
+	 **/
 	public $unixSocket;
 
 	protected $_socket;
 
+	/**
+	 * Connects to redis sentinel 
+	 **/
 	protected function open () {
 		if ($this->_socket !== null) {
 			return;
@@ -37,6 +43,11 @@ class SentinelConnection {
 		}
 	}
 
+	/**
+	 * Asks sentinel to tell redis master server
+	 * 
+	 * @return array|false [host,port] array or false if case of error
+	 **/
 	function getMaster () {
 		if ($this->open()) {
 			return Helper::executeCommand('sentinel', [
