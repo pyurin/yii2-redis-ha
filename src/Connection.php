@@ -7,10 +7,20 @@ use Yii;
 
 class Connection extends \yii\redis\Connection {
 
+	/**
+	 * List of sentinel servers like that:
+	 * ['host1','host2']
+	 **/
 	public $sentinels = null;
 
+	/**
+	 * Redis server hostname, should not be modified from outside
+	 **/
 	public $hostname = null;
 
+	/**
+	 * Redis port hostname, should not be modified from outside
+	 **/
 	public $port = null;
 
 	/**
@@ -41,7 +51,7 @@ class Connection extends \yii\redis\Connection {
 		if (! $this->sentinels) {
 			throw new Exception("Sentinels must be set");
 		}
-		$this->hostname = $this->unixSocket = $this->port;
+		$this->hostname = $this->unixSocket = $this->port = null;
 		list ($this->hostname, $this->port) = (new SentinelsManager())->discoverMaster($this->sentinels);
 		$connection = ($this->unixSocket ?  : $this->hostname . ':' . $this->port) . ', database=' . $this->database;
 		Yii::trace('Opening redis DB connection: ' . $connection, __METHOD__);
