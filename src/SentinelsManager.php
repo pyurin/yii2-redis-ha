@@ -6,6 +6,13 @@ use yii\db\Exception;
 
 class SentinelsManager {
 
+	/**
+	 * Facade function for interraction with sentinel.
+	 * 
+	 * Connects to sentinels (iterrates them if ones fail) and asks for master server address.
+	 * 
+	 * @return array [host,port] address of redis master server or throws exception.
+	 **/
 	function discoverMaster ($sentinels) {
 		foreach ($sentinels as $sentinel) {
 			if (is_scalar($sentinel)) {
