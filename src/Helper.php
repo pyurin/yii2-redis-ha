@@ -6,6 +6,9 @@ use Yii;
 
 class Helper {
 
+	/**
+	 * Execute redis command on socket and return parsed response
+	 **/
 	static function executeCommand ($name, $params, $socket) {
 		Yii::beginProfile("Execute command $name", __CLASS__);
 		array_unshift($params, $name);
