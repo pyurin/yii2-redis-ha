@@ -58,6 +58,7 @@ Basic example:
 						'class' => '\yii\redis\Session',
 						'redis' => [
 							'class' => '\pyurin\yii\redisHa\Connection',
+							'masterName' => 'mymaster',
 							'sentinels' => [
 									'localhost'
 							]

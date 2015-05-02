@@ -13,7 +13,7 @@ class SentinelsManager {
 	 * 
 	 * @return array [host,port] address of redis master server or throws exception.
 	 **/
-	function discoverMaster ($sentinels) {
+	function discoverMaster ($sentinels, $masterName) {
 		foreach ($sentinels as $sentinel) {
 			if (is_scalar($sentinel)) {
 				$sentinel = [
@@ -22,6 +22,7 @@ class SentinelsManager {
 			}
 			$connection = new SentinelConnection();
 			$connection->hostname = isset($sentinel['hostname']) ? $sentinel['hostname'] : null;
+			$connection->masterName = $masterName;
 			if (isset($sentinel['port'])) {
 				$connection->port = $sentinel['port'];
 			}

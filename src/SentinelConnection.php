@@ -8,7 +8,7 @@ class SentinelConnection {
 
 	public $hostname;
 	
-	public $masterName = 'mymaster';
+	public $masterName;
 
 	public $port = 26379;
 
