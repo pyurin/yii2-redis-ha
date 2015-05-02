@@ -7,6 +7,8 @@ use Yii;
 class SentinelConnection {
 
 	public $hostname;
+	
+	public $masterName = 'mymaster';
 
 	public $port = 26379;
 
@@ -52,7 +54,7 @@ class SentinelConnection {
 		if ($this->open()) {
 			return Helper::executeCommand('sentinel', [
 					'get-master-addr-by-name',
-					'mymaster'
+					$this->masterName
 			], $this->_socket);
 		} else {
 			return false;
