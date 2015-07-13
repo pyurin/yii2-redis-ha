@@ -17,7 +17,8 @@ class Helper {
 			$command .= '$' . mb_strlen($arg, '8bit') . "\r\n" . $arg . "\r\n";
 		}
 		
-		Yii::trace("Executing redis Command: {$name} " . ($params ? $params[0] : null), __METHOD__);
+		
+		Yii::trace("Executing redis Command: {$name} " . (isset($params[1]) ? $params[1] : null), __METHOD__);
 		fwrite($socket, $command);
 		
 		$result = static::parseResponse(implode(' ', $params), $socket);
