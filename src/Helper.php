@@ -11,7 +11,7 @@ class Helper {
 	 **/
 	static function executeCommand ($name, $params, $socket) {
 		Yii::beginProfile("Execute command $name", __CLASS__);
-		array_unshift($params, $name);
+		$params = array_merge(explode(' ', $name), $params);
 		$command = '*' . count($params) . "\r\n";
 		foreach ($params as $arg) {
 			$command .= '$' . mb_strlen($arg, '8bit') . "\r\n" . $arg . "\r\n";
