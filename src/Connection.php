@@ -65,10 +65,11 @@ class Connection extends \yii\redis\Connection
             throw new Exception("Sentinels must be set");
         }
         $this->hostname = $this->unixSocket = $this->port = null;
-        list ($this->hostname, $this->port) = (new SentinelsManager())->discoverMaster(
-            $this->sentinels,
-            $this->masterName
-        );
+        list ($this->hostname, $this->port) = (new SentinelsManager([
+            'sentinels' => $this->sentinels,
+            'sentinelPassword' => $this->sentinelPassword,
+            'masterName' => $this->masterName,
+        ]))->discoverMaster();
         $connection = ($this->unixSocket ?: $this->hostname . ':' . $this->port) . ', database=' . $this->database;
         Yii::trace('Opening redis DB connection: ' . $connection, __METHOD__);
         Yii::beginProfile("Connect to redis master", __CLASS__);
