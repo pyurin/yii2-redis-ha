@@ -4,7 +4,17 @@ namespace pyurin\yii\redisHa;
 
 use Yii;
 use yii\db\Exception;
+use yii\helpers\ArrayHelper;
+use yii\redis\LuaScriptBuilder;
+use yii\redis\SocketException;
 
+/**
+ * @property-read string $connectionString Socket connection string.
+ * @property-read string $driverName Name of the DB driver.
+ * @property-read bool $isActive Whether the DB connection is established.
+ * @property-read LuaScriptBuilder $luaScriptBuilder
+ * @property-read resource|false $socket
+ */
 class Connection extends \yii\redis\Connection
 {
 
@@ -35,10 +45,9 @@ class Connection extends \yii\redis\Connection
     public $masterName;
 
     /**
-     *
-     * @var resource redis socket connection
+     * @var array redis redirect socket connection pool
      */
-    protected $socket;
+    private $_pool = [];
 
     /**
      * Returns a value indicating whether the DB connection is established.
@@ -51,6 +60,33 @@ class Connection extends \yii\redis\Connection
     }
 
     /**
+     * Return the connection string used to open a socket connection. During a redirect (cluster mode) this will be the
+     * target of the redirect.
+     * @return string socket connection string
+     * @since 2.0.11
+     */
+    public function getConnectionString()
+    {
+        Yii::warning($this->unixSocket, 'getConnectionString');
+        Yii::warning($this->hostname, 'getConnectionString');
+        Yii::warning($this->port, 'getConnectionString');
+        if ($this->unixSocket) {
+            return 'unix://' . $this->unixSocket;
+        }
+
+        return 'tcp://' . ($this->redirectConnectionString ?: "$this->hostname:$this->port");
+    }
+
+    /**
+     * Return the connection resource if a connection to the target has been established before, `false` otherwise.
+     * @return resource|false
+     */
+    public function getSocket()
+    {
+        return ArrayHelper::getValue($this->_pool, $this->connectionString, false);
+    }
+
+    /**
      * Establishes a DB connection.
      * It does nothing if a DB connection has already been established.
      *
@@ -58,7 +94,7 @@ class Connection extends \yii\redis\Connection
      */
     public function open()
     {
-        if ($this->socket !== null) {
+        if ($this->socket !== false) {
             return;
         }
         if (!$this->sentinels) {
@@ -70,28 +106,38 @@ class Connection extends \yii\redis\Connection
             'sentinelPassword' => $this->sentinelPassword,
             'masterName' => $this->masterName,
         ]))->discoverMaster();
-        $connection = ($this->unixSocket ?: $this->hostname . ':' . $this->port) . ', database=' . $this->database;
+
+
+        $connection = $this->connectionString . ', database=' . $this->database;
         Yii::trace('Opening redis DB connection: ' . $connection, __METHOD__);
-        Yii::beginProfile("Connect to redis master", __CLASS__);
-        $this->socket = @stream_socket_client(
-            $this->unixSocket ? 'unix://' . $this->unixSocket : 'tcp://' . $this->hostname . ':' . $this->port,
+
+        $socket = @stream_socket_client(
+            $this->connectionString,
             $errorNumber,
             $errorDescription,
-            $this->connectionTimeout ? $this->connectionTimeout : ini_get("default_socket_timeout")
+            $this->connectionTimeout ?: ini_get("default_socket_timeout"),
+            $this->socketClientFlags,
+            stream_context_create($this->contextOptions)
         );
-        Yii::endProfile("Connect to redis master", __CLASS__);
-        if ($this->socket) {
+
+        if ($socket) {
+            $this->_pool[ $this->connectionString ] = $socket;
+
             if ($this->dataTimeout !== null) {
                 stream_set_timeout(
-                    $this->socket,
-                    $timeout = (int) $this->dataTimeout,
-                    (int) (($this->dataTimeout - $timeout) * 1000000)
+                    $socket,
+                    $timeout = (int)$this->dataTimeout,
+                    (int)(($this->dataTimeout - $timeout) * 1000000)
                 );
             }
+            if ($this->useSSL) {
+                stream_socket_enable_crypto($socket, true, STREAM_CRYPTO_METHOD_TLS_CLIENT);
+            }
             if ($this->password !== null) {
-                $this->executeCommand('AUTH', [
-                    $this->password,
-                ]);
+                $this->executeCommand('AUTH', array_filter([$this->username, $this->password]));
+            }
+            if ($this->database !== null) {
+                $this->executeCommand('SELECT', [$this->database]);
             }
             list ($role) = $this->executeCommand("ROLE");
             if ($role != 'master') {
@@ -109,26 +155,23 @@ class Connection extends \yii\redis\Connection
                 __CLASS__
             );
             $message = YII_DEBUG ? "Failed to open redis DB connection ($connection): $errorNumber - $errorDescription" : 'Failed to open DB connection.';
-            throw new Exception($message, $errorDescription, (int) $errorNumber);
+            throw new Exception($message, $errorDescription, (int)$errorNumber);
         }
-    }
-
-    public function executeCommand($name, $params = [])
-    {
-        $this->open();
-        $result = Helper::executeCommand($name, $params, $this->socket);
-
-        return $result;
     }
 
     public function close()
     {
-        if ($this->socket !== null) {
-            $connection = ($this->unixSocket ?: $this->hostname . ':' . $this->port) . ', database=' . $this->database;
+        foreach ($this->_pool as $socket) {
+            $connection = $this->connectionString . ', database=' . $this->database;
             \Yii::trace('Closing DB connection: ' . $connection, __METHOD__);
-            $this->executeCommand('QUIT');
-            stream_socket_shutdown($this->socket, STREAM_SHUT_RDWR);
-            $this->socket = null;
+            try {
+                $this->executeCommand('QUIT');
+            } catch (SocketException $e) {
+                // ignore errors when quitting a closed connection
+            }
+            fclose($socket);
         }
+
+        $this->_pool = [];
     }
 }
